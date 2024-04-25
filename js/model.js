@@ -27,14 +27,14 @@ function Staff(
       return Number(this.salary);
     }
   };
-  this.calcRanking = function (hours) {
-    if (hours >= 192) {
+  this.calcRanking = function (hoursWorking) {
+    if (hoursWorking >= 192) {
       return "Nhân viên Xuất Sắc";
     }
-    if (hours > 176) {
+    if (hoursWorking > 176) {
       return "Nhân viên Giỏi";
     }
-    if (hours > 160) {
+    if (hoursWorking > 160) {
       return "Nhân viên Khá";
     } else {
       return "Nhân viên Trung Bình";

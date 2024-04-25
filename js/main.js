@@ -1,8 +1,11 @@
 const staffList = [];
+const modalEl = document.getElementById("myModal");
+
 const regexEmail = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
 const regexPassword = /^(?=.*\d)(?=.*[A-Z])(?=.*\W).+$/;
 const regexDate = /^(0?[1-9]|1[0-2])\/(0?[1-9]|[12]\d|3[01])\/(19|20)\d{2}$/;
 const getJSONfromLocal = localStorage.getItem("STAFFLIST");
+
 if (getJSONfromLocal !== null) {
   const dataStaffListRaw = JSON.parse(getJSONfromLocal);
 
@@ -11,17 +14,23 @@ if (getJSONfromLocal !== null) {
       staff.id,
       staff.name,
       staff.email,
+      staff.password,
       staff.datepicker,
+      staff.salary,
       staff.position,
-      staff.calcTotalSalary,
-      staff.calcRanking
+      staff.hoursWorking
     );
     staffList.push(newStaff);
   });
   renderNewStaffList(staffList);
 }
 const addBtnEl = document.getElementById("btnThemNV");
+const updateBtnEl = document.getElementById("btnCapNhat");
+
 addBtnEl.addEventListener("click", handleAddStudent);
+if (document.getElementById("btnCapNhat").disabled === false) {
+  document.getElementById("btnCapNhat").disabled = true;
+}
 function handleAddStudent() {
   const idEl = +document.getElementById("tknv").value;
   const nameEl = document.getElementById("name").value;
@@ -30,7 +39,7 @@ function handleAddStudent() {
   const datepickerEl = document.getElementById("datepicker").value;
   const salaryEl = +document.getElementById("luongCB").value;
   const positionEl = document.getElementById("chucvu").value;
-  const hoursWorkingEl = document.getElementById("gioLam").value;
+  const hoursWorkingEl = +document.getElementById("gioLam").value;
 
   const newStaff = new Staff(
     idEl,
@@ -42,14 +51,22 @@ function handleAddStudent() {
     positionEl,
     hoursWorkingEl
   );
-  staffList.push(newStaff);
-  validate();
+  let isValid = validate();
+  if (isValid) {
+    staffList.push(newStaff);
+    renderNewStaffList(staffList);
+    // modalEl.classList.remove("show");
+    // modalEl.style.display = "none";
+  } else return;
   const dataJSON = JSON.stringify(staffList);
   localStorage.setItem("STAFFLIST", dataJSON);
   renderNewStaffList(staffList);
+
+  resetForm();
 }
 
 function validate() {
+  let isValid = false;
   let isIdValid;
   let isNameValid;
   let isEmailValid;
@@ -79,14 +96,26 @@ function validate() {
       isDateValid = validateDate(inputSelector);
     } else if (name === "luongCB") {
       isSalaryValid = validateSalary(inputSelector);
+    } else if (name === "gioLam") {
+      isHoursValid = validateHours(inputSelector);
     }
-    // else if (name === "gioLam") {
-    //   isHoursValid = validateHours(inputSelector);
-    // } else if (positionSelector) {
-    //   isPositionValid = validatePosition(positionSelector);
-    // }
+    if (positionSelector) {
+      isPositionValid = validatePosition(positionSelector);
+    }
+    if (
+      isIdValid &&
+      isNameValid &&
+      isEmailValid &&
+      isPasswordValid &&
+      isDateValid &&
+      isSalaryValid &&
+      isHoursValid
+    )
+      isValid = true;
   }
+  return isValid;
 }
+//vì sao hoán đổi positionSelector và name giolam thi ko chạy
 
 //====================================================================
 
@@ -140,7 +169,7 @@ function checkSalary(inputSelector, min, max) {
 }
 
 function checkHours(inputSelector, min, max) {
-  console.log("🚀valueInput---->", inputSelector);
+  const valueInput = inputSelector.value;
   if (valueInput < min || valueInput > max) return false;
   return true;
 }
@@ -249,7 +278,7 @@ function validateHours(inputSelector) {
   let isValid = false;
   if (!required(inputSelector)) {
     showError(inputSelector, "Thời gian không được để trống");
-  } else if (!checkHours((inputSelector, 80, 200))) {
+  } else if (!checkHours(inputSelector, 80, 200)) {
     showError(inputSelector, "Thời gian phải trong khoảng từ 80-200 giờ");
   } else {
     showSuccess(inputSelector);
@@ -287,17 +316,74 @@ function handleDelete(idStaff) {
   renderNewStaffList(staffList);
 }
 
-// function handleSelectedStaff(idStaff) {
-//   const findIndexStaff = staffList.findIndex((staff) => {
-//     return Number(staff.id) === idStaff;
-//   });
-//   const updateStaff = staffList[findIndexStaff];
-//   document.getElementById("tknv").value = updateStaff.id;
-//   document.getElementById("name").value = updateStaff.name;
-//   document.getElementById("email").value = updateStaff.email;
-//   document.getElementById("password").value = updateStaff.password;
-//   document.getElementById("datepicker").value = updateStaff.datepicker;
-//   document.getElementById("luongCB").value = updateStaff.salary;
-//   document.getElementById("chucvu").value = updateStaff.position;
-//   document.getElementById("gioLam").value = updateStaff.hoursWorking;
-// }
+function handleSelectedStaff(idStaff) {
+  modalEl.classList.add("show");
+  modalEl.style.display = "block";
+
+  document.getElementById("btnCapNhat").disabled = false;
+  const findIndexStaff = staffList.findIndex((staff) => {
+    return Number(staff.id) === idStaff;
+  });
+  const updateStaff = staffList[findIndexStaff];
+  document.getElementById("tknv").value = updateStaff.id;
+  document.getElementById("name").value = updateStaff.name;
+  document.getElementById("email").value = updateStaff.email;
+  document.getElementById("password").value = updateStaff.password;
+  document.getElementById("datepicker").value = updateStaff.datepicker;
+  document.getElementById("luongCB").value = updateStaff.salary;
+  document.getElementById("chucvu").value = updateStaff.position;
+  document.getElementById("gioLam").value = updateStaff.hoursWorking;
+}
+
+function resetForm() {
+  document.getElementById("tknv").value = "";
+  document.getElementById("name").value = "";
+  document.getElementById("email").value = "";
+  document.getElementById("password").value = "";
+  document.getElementById("datepicker").value = "";
+  document.getElementById("luongCB").value = "";
+  document.getElementById("chucvu").value = "";
+  document.getElementById("gioLam").value = "";
+}
+
+updateBtnEl.addEventListener("click", handleUpdateStaff);
+
+const closeBtnEl = document.getElementById("btnDong");
+closeBtnEl.addEventListener("click", closeModal);
+function closeModal() {
+  modalEl.classList.remove("show");
+  modalEl.style.display = "none";
+}
+function handleUpdateStaff() {
+  const staff = getFormStaff();
+  const findIndexStaff = staffList.findIndex((staff) => {
+    return Number(staff.id) === staff.id;
+  });
+  let isValid = validate();
+  if (isValid) {
+    staffList[findIndexStaff] = staff;
+    // const dataJSON = JSON.stringify(staffList);
+    // localStorage.setItem("STAFFLIST", dataJSON);
+    renderNewStaffList(staffList);
+    resetForm();
+    modalEl.classList.remove("show");
+    modalEl.style.display = "none";
+  }
+}
+const searchEl = document.getElementById("searchName");
+const btnSearchEl = document.getElementById("btnTimNV");
+btnSearchEl.addEventListener("click", handleSearchStaff);
+function handleSearchStaff() {
+  let valueSearch = searchEl.value;
+  valueSearch = valueSearch.toLowerCase();
+  const newFilterStaff = [];
+  for (let i = 0; i < staffList.length; i++) {
+    let staff = staffList[i];
+
+    let rankedStaffList = staff.calcRanking(staff.hoursWorking).toLowerCase();
+    if (rankedStaffList.indexOf(valueSearch) !== -1) {
+      newFilterStaff.push(staff);
+    }
+  }
+  renderNewStaffList(newFilterStaff);
+}
